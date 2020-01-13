@@ -6,61 +6,39 @@ import (
 )
 
 func watchedVideosByFriends(watchedVideos [][]string, friends [][]int, id int, level int) []string {
-	people := make([]*person, len(friends))
-	for i, _ := range friends {
-		p := &person{id: i, videos: watchedVideos[i]}
-		people[i] = p
-	}
-
-	for i, fs := range friends {
-		p := people[i]
-		for _, f := range fs {
-			p.friends = append(p.friends, people[f])
-		}
-	}
-
-	root := people[id]
 	excludes := make(map[int]bool)
-	excludes[root.id] = true
-	targetFriends := make(map[int]*person)
-	search(root, level, 0, excludes, targetFriends)
-
-	count := make(map[string]int)
-	for _, f := range targetFriends {
-		for _, v := range f.videos {
-			count[v] += 1
-		}
-	}
-
-	return sort(count)
+	excludes[id] = true
+	searchResult := make(map[string]int)
+	search(watchedVideos, friends, id, level, 0, excludes, searchResult)
+	return sort(searchResult)
 }
 
-type person struct {
-	id      int
-	friends []*person
-	videos  []string
-}
-
-func search(p *person, level int, currentDepth int, excludes map[int]bool, result map[int]*person) {
+func search(
+	watchedVideos [][]string,
+	friends [][]int,
+	id int,
+	level int,
+	currentDepth int,
+	excludes map[int]bool,
+	result map[string]int,
+) {
 	if currentDepth < level {
-		// fmt.Printf("[level_%d] %d\n", currentDepth, p.id)
-
-		nextDepth := currentDepth + 1
-
-		var nextSearch []*person
-		for _, f := range p.friends {
-			if _, ok := excludes[f.id]; !ok {
-				nextSearch = append(nextSearch, f)
-				excludes[f.id] = true
+		var nextIDs []int
+		for _, f := range friends[id] {
+			if _, ok := excludes[f]; !ok {
+				nextIDs = append(nextIDs, f)
+				excludes[f] = true
 			}
 		}
 
-		for _, f := range nextSearch {
-			search(f, level, nextDepth, excludes, result)
+		nextDepth := currentDepth + 1
+		for _, nextID := range nextIDs {
+			search(watchedVideos, friends, nextID, level, nextDepth, excludes, result)
 		}
 	} else {
-		// fmt.Printf("[level_%d] %d\n", currentDepth, p.id)
-		result[p.id] = p
+		for _, v := range watchedVideos[id] {
+			result[v] += 1
+		}
 	}
 }
 
