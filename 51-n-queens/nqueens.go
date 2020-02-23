@@ -9,9 +9,7 @@ func main() {
 func solveNQueens(n int) [][]string {
 	var result [][]string
 
-	qss := nQueensRec(n, n-1)
-	//qss := nQueensRecCPS(n, 0, [][]int{})
-	//qss := nQueensLoop(n)
+	qss := placeQueen(n, 0, [][]int{})
 
 	for _, qs := range qss {
 		var ss []string
@@ -32,106 +30,41 @@ func solveNQueens(n int) [][]string {
 	return result
 }
 
-func nQueensRec(n int, m int) [][]int {
-	var qss [][]int
-
-	if m == 0 {
-		for q := 0; q < n; q++ {
-			qss = append(qss, []int{q})
-		}
-		return qss
-	}
-
-	for _, qs := range nQueensRec(n, m-1) {
-		for newQ := 0; newQ < n; newQ++ {
-			addable := true
-			for k, q := range qs {
-				diff := m-k
-				switch newQ {
-				case q, q+diff, q-diff:
-					addable = false
-				}
-			}
-			if addable {
-				newQs := append([]int{}, qs...)
-				newQs = append(newQs, newQ)
-				qss = append(qss, newQs)
-			}
-		}
-	}
-
-	return qss
-}
-
-func nQueensRecCPS(n int, m int, acc [][]int) [][]int {
-	if m == n {
+func placeQueen(size int, rowPos int, acc [][]int) [][]int {
+	if rowPos >= size {
 		return acc
 	}
 
+	var nextRowPos = rowPos+1
 	var qss [][]int
-	var next = m+1
 
-	if m == 0 {
-		for q := 0; q < n; q++ {
-			qss = append(qss, []int{q})
+	if rowPos == 0 {
+		for col := 0; col < size; col++ {
+			qss = append(qss, []int{col})
 		}
-		return nQueensRecCPS(n, next, qss)
+		return placeQueen(size, nextRowPos, qss)
 	}
 
-	for _, qs := range acc {
-		for newQ := 0; newQ < n; newQ++ {
-			addable := true
-			for k, q := range qs {
-				diff := m-k
-				switch newQ {
-				case q, q+diff, q-diff:
-					addable = false
-				}
-			}
-			if addable {
-				newQs := append([]int{}, qs...)
-				newQs = append(newQs, newQ)
+	for _, qPlacedCols := range acc {
+		for col := 0; col < size; col++ {
+			if canPlaceQueen(qPlacedCols, rowPos, col) {
+				newQs := append([]int{}, qPlacedCols...)
+				newQs = append(newQs, col)
 				qss = append(qss, newQs)
 			}
 		}
 	}
 
-	return nQueensRecCPS(n, next, qss)
+	return placeQueen(size, nextRowPos, qss)
 }
 
-func nQueensLoop(n int) [][]int {
-	var qss [][]int
-
-	for m := 0; m < n; m++ {
-		if m == 0 {
-			for q := 0; q < n; q++ {
-				qss = append(qss, []int{q})
-			}
-			continue
+func canPlaceQueen(cols []int, row int, col int) bool {
+	for r, c := range cols {
+		diff := row-r
+		switch col {
+		case c, c+diff, c-diff:
+			return false
 		}
-
-		var newQss [][]int
-
-		for _, qs := range qss {
-			for newQ := 0; newQ < n; newQ++ {
-				addable := true
-				for k, q := range qs {
-					diff := m-k
-					switch newQ {
-					case q, q+diff, q-diff:
-						addable = false
-					}
-				}
-				if addable {
-					newQs := append([]int{}, qs...)
-					newQs = append(newQs, newQ)
-					newQss = append(newQss, newQs)
-				}
-			}
-		}
-
-		qss = newQss
 	}
-
-	return qss
+	return true
 }
